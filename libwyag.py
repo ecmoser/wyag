@@ -15,6 +15,10 @@ argparser = argparse.ArgumentParser(description="The stupidest content tracker")
 argsubparsers = argparser.add_subparsers(title="Commands", dest="command")
 argsubparsers.required = True
 
+# Make a subparser to handle init command args
+argsp = argsubparsers.add_parser("init", help="Initialize a new, empty repository")
+argsp.add_argument("path", metavar="directory", nargs="?", default=".", help="Where to create the repository")
+
 def main(argv=sys.argv[1:]):
     # Parse command line arguments
     args = argparser.parse_args(argv)
@@ -56,7 +60,7 @@ class GitRepository(object):
 
         # Read config file in .git/config
         self.conf = configparser.ConfigParser()
-        cf = repo_file(self, config)
+        cf = repo_file(self, "config")
 
         # Check if config file exists
         if cf and os.path.exists(cf):
@@ -73,7 +77,7 @@ class GitRepository(object):
 
 def repo_path(repo, *path):
     """Compute path under repo's getdir."""
-    return os.path.join(repo.getdir, *path)
+    return os.path.join(repo.gitdir, *path)
 
 
 def repo_file(repo, *path, mkdir=False):
@@ -82,7 +86,8 @@ example, repo_file(r, \"refs\", \"remotes\", \"origin\", \"HEAD\") will create
 .git/refs/remotes/origin."""
 
     # If path is valid and a dir, return the path
-    if repo_dir(repo, path[:-1], mkdir=mkdir):
+    # path is a tuple of components; pass them as separate args to repo_dir
+    if repo_dir(repo, *path[:-1], mkdir=mkdir):
         return repo_path(repo, *path)
 
     
@@ -115,7 +120,7 @@ def repo_create(path):
     if os.path.exists(repo.worktree):
         if not os.path.isdir(repo.worktree):
             raise Exception(f"{path} is not a directory")
-        if os.path.exists(repo.getdir) and os.listdir(repo.getdir):
+        if os.path.exists(repo.gitdir) and os.listdir(repo.gitdir):
             raise Exception(f"{path} is not empty")
     else:
         os.makedirs(repo.worktree)
@@ -141,3 +146,16 @@ def repo_create(path):
 
     return repo
     
+def repo_default_config():
+    # Create and populate a config with default values
+    ret = configparser.ConfigParser()
+
+    ret.add_section("core")
+    ret.set("core", "repositoryformatversion", "0")
+    ret.set("core", "filemode", "false")
+    ret.set("core", "bare", "false")
+
+    return ret
+
+def cmd_init(args):
+    repo_create(args.path)
