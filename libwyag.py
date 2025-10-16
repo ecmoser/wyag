@@ -146,6 +146,7 @@ def repo_create(path):
 
     return repo
     
+
 def repo_default_config():
     # Create and populate a config with default values
     ret = configparser.ConfigParser()
@@ -156,6 +157,27 @@ def repo_default_config():
     ret.set("core", "bare", "false")
 
     return ret
+
+
+def repo_find(path=".", required=True):
+    path = os.path.realpath(path)
+
+    # A dir is a repo if it contains .git directory. If it is, return it.
+    if os.path.isdir(os.path.join(path, ".git")):
+        return GitRepository(path)
+
+    # If not returned, recursively call with the parent directory
+    parent = os.path.realpath(os.path.join(path, ".."))
+
+    # Recursion base case
+    if parent == path:
+        if required:
+            raise Exception("No git directory")
+        else:
+            return None
+    
+    return repo_find(parent, required)
+
 
 def cmd_init(args):
     repo_create(args.path)
