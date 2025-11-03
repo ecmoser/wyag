@@ -20,7 +20,7 @@ argsp = argsubparsers.add_parser("init", help="Initialize a new, empty repositor
 argsp.add_argument("path", metavar="directory", nargs="?", default=".", help="Where to create the repository")
 
 argsp = argsubparsers.add_parser("cat-file", help="Provide content of repository objects")
-argsp.add_argument("type", metavar="type", choices=["blob", "commit", "tag", "tree"], help="Specify the type")
+argsp.add_argument("type", metavar="type", choices=["blob","commit","tag","tree"], help="Specify the type")
 argsp.add_argument("object", metavar="object", help="The object to display")
 
 argsp = argsubparsers.add_parser("hash-object", help="Compute object ID and optionally create a blob from file")
@@ -248,11 +248,11 @@ def object_read(repo, sha):
         
         # set c to the tyoe of the object
         match fmt:
-            case b'commit': c=GitCommit
-            case b'tree': c=GitTree
-            case b'tag': c=GitTag
-            case b'blob': c=GitBlob
-            case _:
+            case b'commit'  : c=GitCommit
+            case b'tree'    : c=GitTree
+            case b'tag'     : c=GitTag
+            case b'blob'    : c=GitBlob
+            case _: 
                 raise Exception(f"Unknown type {fmt.decode("ascii")} for object {sha}")
             
         # return new object of the object's type    
@@ -291,10 +291,10 @@ def object_hash(fd, fmt, repo=None):
     data = fd.read()
 
     match fmt:
-        case b'commit': obj=GitCommit(data)
-        case b'tree': obj=GitTree(data)
-        case b'tag': obj=GitTag(data)
-        case b'blob': obj=GitBlob(data)
+        case b'commit'  : obj=GitCommit(data)
+        case b'tree'    : obj=GitTree(data)
+        case b'tag'     : obj=GitTag(data)
+        case b'blob'    : obj=GitBlob(data)
         case _: raise Exception(f"Unknown type {fmt}")
     
     return object_write(obj, repo)
@@ -304,9 +304,6 @@ def cat_file(repo, obj, fmt=None):
     obj = object_read(repo, object_find(repo, obj, fmt=fmt))
     sys.stdout.buffer.write(obj.serialize)
 
-
-def cmd_init(args):
-    repo_create(args.path)
 
 def cmd_cat_file(args):
     repo = repo_find()
@@ -321,3 +318,6 @@ def cmd_hash_object(args):
     with open(args.path, "rb") as fd:
         sha = object_hash(fd, args.type.encode(), repo)
         print(sha)
+        
+def cmd_init(args):
+    repo_create(args.path)
