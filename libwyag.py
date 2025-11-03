@@ -99,6 +99,16 @@ What exactly that means depend on each subclass.
         pass
 
 
+class GitBlob(GitObject):
+    fmt=b'blob'
+
+    def serialize(self):
+        return self.blobdata
+    
+    def deserialize(self, data):
+        self.blobdata = data
+
+
 def repo_path(repo, *path):
     """Compute path under repo's getdir."""
     return os.path.join(repo.gitdir, *path)
